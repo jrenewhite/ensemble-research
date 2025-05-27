@@ -1,0 +1,42 @@
+@startuml
+title Evaluation and Visualization – Component View
+
+package "Evaluation Phase" {
+  component "evaluate_results.py"
+}
+
+package "Visualization Phase" {
+  component "generate_visuals.py"
+}
+
+folder "Fold Outputs" {
+  [predictions.csv]
+  [probabilities.csv]
+  [metadata.json]
+}
+
+folder "Evaluation Summary" {
+  [evaluation_summary.json]
+  [evaluation_summary.csv]
+}
+
+folder "Visual Outputs" {
+  [confusion_matrix_all.png]
+  [accuracy_by_model.png]
+  [ensemble_timing.png]
+  [visuals.json]
+}
+
+[evaluate_results.py] --> [predictions.csv]
+[evaluate_results.py] --> [probabilities.csv]
+[evaluate_results.py] --> [metadata.json]
+[evaluate_results.py] --> [evaluation_summary.json]
+[evaluate_results.py] --> [evaluation_summary.csv]
+
+[generate_visuals.py] --> [evaluation_summary.json]
+[generate_visuals.py] --> [confusion_matrix_all.png]
+[generate_visuals.py] --> [accuracy_by_model.png]
+[generate_visuals.py] --> [ensemble_timing.png]
+[generate_visuals.py] --> [visuals.json]
+
+@enduml

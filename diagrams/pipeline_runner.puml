@@ -1,0 +1,58 @@
+@startuml
+title Pipeline Runner – Component View
+
+component "run_pipeline.py" as Runner
+
+package "Configuration" {
+  [experiment_pipeline.yml]
+  [job.json]
+  [system.json]
+}
+
+package "Execution Engines" {
+  [main_monolithic.py]
+  [main.py\n--role=coordinator] as Coordinator
+  [main.py\n--role=worker] as Worker
+}
+
+package "Evaluation Phase" {
+  [evaluate_results.py]
+}
+
+package "Visualization Phase" {
+  [generate_visuals.py]
+}
+
+package "Tracking" {
+  [status/<dataset>/status.json]
+  [status/<dataset>/fold_<i>.json]
+}
+
+folder "Fold Output" {
+  [results/<dataset>/fold_<i>/]
+}
+
+folder "Evaluation Output" {
+  [evaluation_summary.json]
+  [evaluation_summary.csv]
+}
+
+Runner --> [experiment_pipeline.yml]
+Runner --> [status/<dataset>/status.json]
+Runner --> [main_monolithic.py]
+Runner --> Coordinator
+Runner --> [evaluate_results.py]
+Runner --> [generate_visuals.py]
+
+[main_monolithic.py] --> [results/<dataset>/fold_<i>/]
+Coordinator --> [results/<dataset>/fold_<i>/]
+Worker --> Coordinator : Requests task + runs training
+Worker --> [results/<dataset>/fold_<i>/]
+
+[evaluate_results.py] --> [evaluation_summary.json]
+[generate_visuals.py] --> [evaluation_summary.json]
+
+Runner --> [job.json]
+Runner --> [system.json]
+
+@enduml

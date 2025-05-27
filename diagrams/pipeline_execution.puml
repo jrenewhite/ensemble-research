@@ -1,0 +1,66 @@
+@startuml PipelineExecutionFlow
+
+title Pipeline Runner (run_pipeline.py) - Full Execution Flow
+
+start
+
+:Load experiment_pipeline.yml;
+:Initialize global status in status/;
+
+repeat
+  :Select next dataset;
+  :Check status/<dataset>/status.json;
+
+  if (Train phase DONE?) then (yes)
+    note right
+      Skip training.
+    end note
+  else (no)
+    if (mode == monolithic?) then (yes)
+      :Run main_monolithic.py;
+    else (no)
+      :Run main.py --role=coordinator;
+    endif
+
+    :Update fold_<i>.json as DONE or FAILED;
+    :Update train_status if all folds DONE;
+  endif
+
+  if (Outputs transferred?) then (yes)
+    note right
+      Skip transfer phase.
+    end note
+  else (no)
+    :Transfer fold outputs to shared location;
+    :Update fold_<i>.json → output_transferred = true;
+  endif
+
+  if (All folds READY?) then (yes)
+    if (Evaluation DONE?) then (yes)
+      note right
+        Skip evaluation.
+      end note
+    else (no)
+      :Run evaluate_results.py;
+      :Update evaluate_status to DONE;
+    endif
+  else (no)
+    :Wait or retry failed folds;
+  endif
+
+  if (Visualization DONE?) then (yes)
+    note right
+      Skip visualization.
+    end note
+  else (no)
+    :Run generate_visuals.py;
+    :Update visualize_status to DONE;
+  endif
+
+repeat while (more datasets to process?)
+
+:Update pipeline_status.json → COMPLETE;
+
+stop
+
+@enduml

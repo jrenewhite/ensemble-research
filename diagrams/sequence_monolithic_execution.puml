@@ -1,0 +1,42 @@
+@startuml
+title Monolithic Execution – K-Fold Workflow <<Data Parallelism>>
+
+actor User
+
+participant PipelineRunner as "run_pipeline.py"
+participant Main as "main_monolithic.py"
+participant DataLoader
+participant ModelInitializer
+participant ResultSerializer
+participant FoldStatus
+
+User -> PipelineRunner : Start run_pipeline.py
+PipelineRunner -> FoldStatus : Check train_status
+alt Not done
+  PipelineRunner -> Main : Launch training with config + kfold
+end
+
+Main -> DataLoader : Load and preprocess dataset
+Main -> Main : Split into K folds
+
+group Train Folds
+  loop For each fold
+    Main -> FoldStatus : Check fold_<i>.json
+    alt Fold not DONE
+      Main -> ModelInitializer : Initialize models
+      Main -> Main : Train ensemble
+      Main -> ResultSerializer : Save predictions, probs, ranks
+      ResultSerializer -> FoldStatus : Mark fold_<i> as DONE
+    else Fold already DONE
+      Main -> Main : Skip fold
+    end
+  end
+end
+
+Main -> FoldStatus : Update train_status = DONE
+
+PipelineRunner -> FoldStatus : Detect training complete
+PipelineRunner -> evaluate_results.py : Run evaluation
+PipelineRunner -> generate_visuals.py : Generate plots
+
+@enduml

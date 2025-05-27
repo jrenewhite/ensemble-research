@@ -1,0 +1,52 @@
+@startuml
+title Distributed Execution – With Pipeline Runner <<Data Parallelism>>
+
+actor User
+
+participant PipelineRunner as "run_pipeline.py"
+
+box "Coordinator Side"
+participant Coordinator
+participant FoldStatus
+end box
+
+box "Worker Side"
+participant Worker
+participant DataLoader
+participant ModelInitializer
+participant ResultSerializer
+end box
+
+User -> PipelineRunner : Start run_pipeline.py
+PipelineRunner -> FoldStatus : Check train_status
+alt Not done
+  PipelineRunner -> Coordinator : Launch with dataset/fold configs
+end
+
+group Worker requests task
+  Worker -> Coordinator : Connect and request fold
+  Coordinator -> Worker : Send job.json, system.json, fold_id
+  Coordinator -> FoldStatus : Mark fold_<i> as IN_PROGRESS
+end
+
+group Worker trains fold
+  Worker -> DataLoader : Load and preprocess dataset
+  Worker -> ModelInitializer : Initialize models
+  Worker -> Worker : Train ensemble
+  Worker -> ResultSerializer : Save predictions, probs, ranks, metadata
+  ResultSerializer -> Worker : Return fold output path
+end
+
+group Send result to Coordinator
+  Worker -> Coordinator : ACK + fold_id
+  Coordinator -> FoldStatus : Mark fold_<i> as DONE
+end
+
+alt All folds DONE
+  Coordinator -> FoldStatus : Set train_status = DONE
+  PipelineRunner -> FoldStatus : Detect completion
+  PipelineRunner -> evaluate_results.py : Run evaluation
+  PipelineRunner -> generate_visuals.py : Generate plots
+end
+
+@enduml

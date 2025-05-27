@@ -1,0 +1,47 @@
+@startuml
+title Monolithic Runner – Component View
+
+package "Execution Logic" {
+  component "main_monolithic.py" as Runner
+}
+
+package "Common Modules" {
+  [DataLoader]
+  [ModelInitializer]
+  [ResultSerializer]
+}
+
+package "Configuration" {
+  [job.json]
+  [system.json]
+  [feature_mapping.csv]
+}
+
+database "Dataset (.csv)" as Dataset
+folder "Fold Output" {
+  [predictions.csv]
+  [probabilities.csv]
+  [ranks.csv]
+  [metadata.json]
+}
+folder "Status Tracking" {
+  [fold_<i>.json]
+  [status.json]
+}
+
+[job.json] --> Runner
+[system.json] --> Runner
+[feature_mapping.csv] --> Runner
+Dataset --> DataLoader
+Runner --> DataLoader
+Runner --> ModelInitializer
+Runner --> ResultSerializer
+
+ResultSerializer --> [predictions.csv]
+ResultSerializer --> [probabilities.csv]
+ResultSerializer --> [ranks.csv]
+ResultSerializer --> [metadata.json]
+ResultSerializer --> [fold_<i>.json]
+Runner --> [status.json]
+
+@enduml

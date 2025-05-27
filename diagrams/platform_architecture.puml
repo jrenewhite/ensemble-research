@@ -1,0 +1,52 @@
+@startuml
+title Platform Architecture – Dynamic Roles and Deployment
+
+actor User
+
+package "Any Node (Docker Compose)" {
+  node "agent-node" as Agent
+  node "api-node" as API
+  node "ui-node" as UI
+  node "Evaluator (optional)" as Evaluator
+}
+
+cloud "Other Nodes" {
+  node "Other agent-node instances"
+}
+
+database "Shared Storage (NAS, NFS, or Sync)" as SharedStorage
+
+rectangle "Key Roles (dynamic)" {
+  [Experimenter]
+  [Coordinator]
+  [Worker]
+}
+
+User --> UI : Upload YAML
+UI --> API : POST /pipeline
+API --> SharedStorage : Save experiment_pipeline.yml
+
+Agent --> API : Announce presence
+Agent --> SharedStorage : Read status/
+Agent --> SharedStorage : Push results
+
+API --> Agent : Assign task (train, eval, vis)
+Agent --> Worker : Execute step
+Worker --> SharedStorage : Save fold output
+
+Agent --> Coordinator : Connect for distributed training
+Coordinator --> Worker : Assign fold
+Worker --> SharedStorage : Save fold result
+
+Evaluator --> SharedStorage : Read evaluation_summary.json
+Evaluator --> SharedStorage : Save motion_canvas.json or plots
+
+note bottom of Agent
+Each agent may:
+- Become Experimenter (if no UI/API)
+- Act as Worker or Evaluator
+- Promote to Coordinator if needed
+- Auto-detect role via BOOT_MODE or network
+end note
+
+@enduml

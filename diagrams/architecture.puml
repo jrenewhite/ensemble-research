@@ -1,0 +1,81 @@
+@startuml EnsembleSystemArchitecture
+
+title Ensemble Learning System – Updated Architecture
+
+package "Orchestration" {
+  [run_pipeline.py]
+}
+
+package "Execution Engines" {
+  [Monolithic Runner\n(main_monolithic.py)]
+  [Distributed Runner\n(main.py --role=worker|coordinator)]
+}
+
+package "Shared Logic" {
+  [DataLoader]
+  [ModelInitializer]
+  [ResultSerializer]
+}
+
+package "Evaluation & Visualization" {
+  [evaluate_results.py]
+  [generate_visuals.py]
+}
+
+package "Distributed Logic" {
+  [Task Coordinator]
+  [Worker Handler]
+  [Fold State Tracker\n(READY, FAILED, DONE)]
+}
+
+package "Data & Configs" {
+  [Datasets (.csv)]
+  [job.json]
+  [system.json]
+  [feature_mapping.csv]
+  [experiment_pipeline.yml]
+}
+
+package "Status Tracking" {
+  [status/<dataset>/status.json]
+  [status/<dataset>/fold_<i>.json]
+  [pipeline_status.json]
+}
+
+package "Results" {
+  [Fold Output (.csv/.json)\n(predictions, probs, ranks)]
+  [Evaluation Summary (.json/.csv)]
+  [Plots (.png)]
+  [Motion Canvas Data (.json)]
+}
+
+[run_pipeline.py] --> [experiment_pipeline.yml]
+[run_pipeline.py] --> [Monolithic Runner]
+[run_pipeline.py] --> [Distributed Runner]
+[run_pipeline.py] --> [evaluate_results.py]
+[run_pipeline.py] --> [generate_visuals.py]
+[run_pipeline.py] --> [pipeline_status.json]
+
+[Monolithic Runner] --> [DataLoader]
+[Monolithic Runner] --> [ModelInitializer]
+[Monolithic Runner] --> [ResultSerializer]
+[Monolithic Runner] --> [status/<dataset>/fold_<i>.json]
+
+[Distributed Runner] --> [DataLoader]
+[Distributed Runner] --> [ModelInitializer]
+[Distributed Runner] --> [ResultSerializer]
+[Distributed Runner] --> [Task Coordinator]
+[Task Coordinator] --> [Worker Handler]
+[Task Coordinator] --> [Fold State Tracker]
+[Distributed Runner] --> [status/<dataset>/fold_<i>.json]
+
+[ResultSerializer] --> [Fold Output (.csv/.json)]
+
+[evaluate_results.py] --> [Fold Output (.csv/.json)]
+[evaluate_results.py] --> [Evaluation Summary (.json/.csv)]
+
+[generate_visuals.py] --> [Evaluation Summary (.json/.csv)]
+[generate_visuals.py] --> [Motion Canvas Data (.json)]
+[generate_visuals.py] --> [Plots (.png)]
+
+@enduml

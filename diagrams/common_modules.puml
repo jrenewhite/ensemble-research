@@ -1,0 +1,36 @@
+@startuml
+title Common Modules – Component Relationships
+
+package "User Input" {
+  [job.json]
+  [system.json]
+  [feature_mapping.csv]
+}
+
+package "Shared Logic" {
+  component DataLoader
+  component ModelInitializer
+  component ResultSerializer
+}
+
+database "Dataset (CSV)" as Dataset
+folder "Fold Output" {
+  [predictions.csv]
+  [probabilities.csv]
+  [ranks.csv]
+  [metadata.json]
+}
+
+[job.json] --> ModelInitializer
+[system.json] --> DataLoader
+[feature_mapping.csv] --> DataLoader
+Dataset --> DataLoader
+
+DataLoader --> ModelInitializer : X, y, features
+ModelInitializer --> ResultSerializer : trained ensemble(s)
+ResultSerializer --> [predictions.csv]
+ResultSerializer --> [probabilities.csv]
+ResultSerializer --> [ranks.csv]
+ResultSerializer --> [metadata.json]
+
+@enduml

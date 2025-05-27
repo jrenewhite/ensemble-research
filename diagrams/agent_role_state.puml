@@ -1,0 +1,31 @@
+@startuml
+title agent-node Role State Machine
+
+[*] --> Initializing
+
+Initializing --> RoleDecision : Read BOOT_MODE\n+ Discover network
+
+RoleDecision --> ExperimenterCandidate : BOOT_MODE=auto\n+ No experimenter
+RoleDecision --> CoordinatorCandidate : BOOT_MODE=auto\n+ Coordinator missing
+RoleDecision --> Worker : BOOT_MODE=worker\nor fallback
+RoleDecision --> Evaluator : BOOT_MODE=evaluator
+RoleDecision --> Experimenter : BOOT_MODE=experimenter
+RoleDecision --> Coordinator : BOOT_MODE=coordinator
+
+ExperimenterCandidate --> Experimenter : No conflict
+ExperimenterCandidate --> Worker : Conflict detected
+
+CoordinatorCandidate --> Coordinator : Promoted
+CoordinatorCandidate --> Worker : Rejected
+
+Experimenter --> RunningExperimenter
+Coordinator --> RunningCoordinator
+Worker --> RunningWorker
+Evaluator --> RunningEvaluator
+
+RunningExperimenter --> [*] : Accept YAML\nDistribute tasks
+RunningCoordinator --> [*] : Assign folds\nUpdate status
+RunningWorker --> [*] : Execute task\nSave result
+RunningEvaluator --> [*] : Generate plots\nExport animations
+
+@enduml

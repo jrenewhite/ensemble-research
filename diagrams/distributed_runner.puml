@@ -1,0 +1,57 @@
+@startuml
+title Distributed Runner – Component View
+
+package "Execution Logic" {
+  component "main.py (Coordinator Mode)" as Coordinator
+  component "main.py (Worker Mode)" as Worker
+}
+
+package "Common Modules" {
+  [DataLoader]
+  [ModelInitializer]
+  [ResultSerializer]
+}
+
+package "Task Coordination" {
+  [Fold Queue]
+  [Task Assignment]
+}
+
+package "Status Tracking" {
+  [fold_<i>.json]
+  [status.json]
+}
+
+folder "Config" {
+  [job.json]
+  [system.json]
+}
+
+database "Dataset (.csv)" as Dataset
+folder "Fold Output" {
+  [predictions.csv]
+  [probabilities.csv]
+  [ranks.csv]
+  [metadata.json]
+}
+
+Coordinator --> [Fold Queue]
+Coordinator --> [Task Assignment]
+[Fold Queue] --> [fold_<i>.json]
+Coordinator --> [status.json]
+Coordinator --> Worker : Send config + fold_id
+
+Worker --> DataLoader
+Worker --> ModelInitializer
+Worker --> ResultSerializer
+Dataset --> DataLoader
+[job.json] --> Worker
+[system.json] --> Worker
+
+ResultSerializer --> [predictions.csv]
+ResultSerializer --> [probabilities.csv]
+ResultSerializer --> [ranks.csv]
+ResultSerializer --> [metadata.json]
+ResultSerializer --> [fold_<i>.json]
+
+Worker --> Coordinator : ACK + fold result info
