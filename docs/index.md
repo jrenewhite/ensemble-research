@@ -42,10 +42,12 @@ See [`experiment_plan.md`](../experiments/experiment_plan.md) for full details.
 
 ---
 
-## 📚 Documentation Index
+## Documentation Index
 
 - [Architecture Overview](./architecture/overview.md)
 - [Pipeline Flow](./architecture/pipeline.md)
+- [Multi-Container Deployment](./architecture/non_container_deployment.md)
+- [Non-Container Deployment](./architecture/non_container_deployment.md)
 - [Monolithic Execution](./modules/monolithic.md)
 - [Distributed Execution](./modules/distributed.md)
 - [Evaluation & Visualization](./modules/evaluation.md)
@@ -53,7 +55,7 @@ See [`experiment_plan.md`](../experiments/experiment_plan.md) for full details.
 
 ---
 
-## 🔭 Future Extensions
+## Future Extensions
 
 The system is designed to be extensible. Planned improvements include:
 

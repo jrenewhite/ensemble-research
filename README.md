@@ -6,31 +6,59 @@ A modular, scalable, and distributed system for running ensemble machine learnin
 
 ## Features
 
-- **Monolithic and distributed training** (fold-by-fold ensemble learning)
-- **Dynamic role assignment**: experimenter, coordinator, worker, evaluator
-- **Declarative YAML pipelines**
-- **Web GUI** to monitor experiments and submit configurations
-- **Task distribution** via Docker, SSH, or shared folders
-- **Visualization engine** using D3.js and optional Motion Canvas animations
-- **Compatible with heterogeneous hardware** (x86, ARM, etc.)
+- **Monolithic and distributed execution** with K-Fold cross-validation
+- **Dynamic role assignment**: experimenter, coordinator, worker, evaluator, renderer
+- **Declarative YAML pipelines** for defining experiment workflows
+- **Web UI** (React-based) to monitor jobs, upload configs, and review outputs
+- **Live visualization** and animation generation using D3.js and Motion Canvas
+- **Task distribution** via Docker network, SSH, or shared file system (NFS/NAS)
+- **Resilience & fault-tolerance** across resource-constrained nodes
+- **Hardware-agnostic**: runs on x86, ARM (Raspberry Pi, Orange Pi), and macOS
 
 ---
 
 ## Architecture
 
-Each node runs a set of containerized services:
+Each node runs one or more containerized components, all of which coordinate via a REST API or WebSocket mesh:
 
-| Container      | Description                             |
-|----------------|-----------------------------------------|
-| `agent-node`   | Executes tasks and negotiates role       |
-| `api-node`     | Central API and task dispatcher          |
-| `ui-node`      | React web interface                      |
-| `evaluator-node` | Optional, generates visuals separately |
+| Container         | Role Description |
+|------------------|------------------|
+| `agent-node`      | Detects available modules and assumes a role (worker, coordinator, etc.) |
+| `api-node`        | Central API for coordination, registration, and monitoring |
+| `ui-node`         | Web dashboard for users |
+| `evaluator-node`  | Calculates metrics for each fold |
+| `renderer-node`   | Creates plots and animations |
+| `inference-node`  | Hosts trained models for live prediction |
 
-All roles can run on any node. The system is designed to be hardware-agnostic and auto-configuring.
+For full architecture and communication design:
+- [Platform Architecture](./docs/architecture/platform_architecture.md)
+- [Non-Container Deployment](./docs/architecture/non_container_deployment.md)
+- [Agent Role State Machine](./docs/architecture/agent_role_state.md)
+- [Pipeline Flow](./docs/architecture/pipeline.md)
 
-See [Platform Architecture](./docs/architecture/platform_architecture.puml)  
-See [Role State Machine](./docs/architecture/agent_role_state.puml)
+---
+
+## Experiment Pipeline
+
+Experiments are declared using a structured YAML file. The pipeline supports:
+
+- Sequential and parallel execution of monolithic and distributed steps
+- Dynamic task reassignment
+- Evaluation and visualization decoupled from training
+- Inference support (real-time predictions)
+
+See [YAML Reference](./docs/architecture/yaml_reference.md)
+
+---
+
+## Execution Modes
+
+| Mode        | Description                                     |
+|-------------|-------------------------------------------------|
+| Monolithic  | Single-machine fold-by-fold execution           |
+| Distributed | Fold-level parallelization using networked nodes|
+| Hybrid      | Combined workflows for benchmarking             |
+| Inference   | Use of trained ensembles for real-time scoring  |
 
 ---
 
@@ -38,17 +66,17 @@ See [Role State Machine](./docs/architecture/agent_role_state.puml)
 
 ### Requirements
 
-- Docker + Docker Compose
-- Python 3.9+ (for local dev or scripts)
-- Shared volume or network access between nodes
+- Docker + Docker Compose (for container deployment)
+- Python 3.9+ (for script-based runners)
+- Shared volume or network connectivity
 
-### Quick Start (All roles in one node)
+### Local Development
 
 ```bash
 docker-compose up --build
 ````
 
-### Lightweight Agent (e.g., Raspberry Pi)
+### Lightweight Node (e.g. Pi)
 
 ```bash
 docker-compose -f docker-compose.agent.yml up --build
@@ -58,34 +86,15 @@ docker-compose -f docker-compose.agent.yml up --build
 
 ## Experiments
 
-Includes support for executing predefined experiment scenarios:
+Includes predefined scenarios:
 
-* **E1**: Monolithic confusion matrix evaluation
-* **E2**: Distributed equivalent
-* **E3**: ANOVA + Tukey post-hoc comparison
-* **E4**: Scalability benchmark
-* **E5**: Fault-tolerance under partial failure
+* **E1**: Confusion matrices for all models/datasets (monolithic)
+* **E2**: Distributed equivalent (multi-node benchmark)
+* **E3**: Statistical comparison (ANOVA + Tukey HSD)
+* **E4**: Scalability testing
+* **E5**: Fault-tolerance (failures and recovery)
 
-See [`experiment_plan.md`](./docs/experiments/experiment_plan.md)
-
----
-
-## Dynamic Roles
-
-Each `agent-node` selects a role at runtime based on:
-
-* Boot mode (`BOOT_MODE=auto|experimenter|worker|...`)
-* Discovery of existing experimenters or coordinators
-* Resource availability
-
-See [Dynamic Role Assignment](./docs/architecture/roles.md)
-
----
-
-## Visualization
-
-* In-browser charts powered by **D3.js**
-* Offline animated videos generated using **Motion Canvas**
+See full list: [`experiment_plan.md`](./docs/experiments/experiment_plan.md)
 
 ---
 
@@ -93,20 +102,33 @@ See [Dynamic Role Assignment](./docs/architecture/roles.md)
 
 ```plaintext
 src/
-  ├── pipeline/         # Core pipeline runner and step handlers
-  ├── agent/            # Role negotiation and executor logic
-  ├── api/              # REST API backend
-  ├── ui/               # React-based web frontend
-  └── evaluation/       # Evaluation & visualization logic
+├── agent/           # Role negotiation and task logic
+├── api/             # Flask/FastAPI service for coordination
+├── ui/              # React dashboard
+├── pipeline/        # YAML orchestrator
+├── monolithic/      # Single-node execution runner
+├── distributed/     # Coordinator and worker logic
+├── evaluation/      # Metrics & statistical summaries
+└── renderer/        # Plotting and animation generation
 ```
+
+---
+
+## Documentation
+
+* [Overview](./docs/index.md)
+* [Execution Flow](./docs/usage/execution_flow.md)
+* [Monolithic Engine](./docs/modules/monolithic.md)
+* [Distributed Engine](./docs/modules/distributed.md)
+* [Evaluation & Visualization](./docs/modules/evaluation.md)
+* [Inputs & Outputs](./docs/architecture/io_reference.md)
+* [YAML Schema](./docs/architecture/yaml_reference.md)
 
 ---
 
 ## Contributing
 
 1. Fork the repo
-2. Use the Dockerized dev environment
-3. Write clean, modular code with comments in English
-4. Document your work under `docs/`
-
-
+2. Use the Dockerized development environment
+3. Follow clean code practices, OOP if possible
+4. Add documentation in `docs/` when modifying modules
